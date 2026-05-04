@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Mortgage Decision Simulator — compare two loan options with APR vs EAR analysis, amortization schedules, and total cost of borrowing.">
+    <meta name="theme-color" content="#185FA5">
+    <title>Mortgage Decision Simulator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h2 class="sr-only">Mortgage Decision Simulator — compare two loan options with APR vs EAR analysis, amortization schedules, and total cost of borrowing.</h2>
+
+    <div class="sim">
+        <div class="top-bar">
+            <h1>Mortgage decision simulator</h1>
+            <p>Compare two loans using proper finance theory</p>
+        </div>
+
+        <div class="grid2" style="margin-bottom:1rem;align-items:start">
+            <div class="card a-accent">
+                <div class="section-label"><span class="badge badge-a">Loan A</span></div>
+                <div class="grid2">
+                    <div class="field"><label>Loan amount ($)</label><input id="a_pv" type="number" value="300000" min="1000" step="1000"></div>
+                    <div class="field"><label>Term (years)</label><input id="a_n" type="number" value="30" min="1" max="40" step="1"></div>
+                    <div class="field"><label>APR (%)</label><input id="a_apr" type="number" value="6.5" min="0.1" max="25" step="0.01"></div>
+                    <div class="field"><label>Compounding</label>
+                        <select id="a_comp">
+                            <option value="12" selected>Monthly</option>
+                            <option value="4">Quarterly</option>
+                            <option value="2">Semiannual</option>
+                            <option value="1">Annual</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="card b-accent">
+                <div class="section-label"><span class="badge badge-b">Loan B</span></div>
+                <div class="grid2">
+                    <div class="field"><label>Loan amount ($)</label><input id="b_pv" type="number" value="300000" min="1000" step="1000"></div>
+                    <div class="field"><label>Term (years)</label><input id="b_n" type="number" value="30" min="1" max="40" step="1"></div>
+                    <div class="field"><label>APR (%)</label><input id="b_apr" type="number" value="6.75" min="0.1" max="25" step="0.01"></div>
+                    <div class="field"><label>Compounding</label>
+                        <select id="b_comp">
+                            <option value="12" selected>Monthly</option>
+                            <option value="4">Quarterly</option>
+                            <option value="2">Semiannual</option>
+                            <option value="1">Annual</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid2" style="margin-bottom:1rem">
+            <div class="card">
+                <div class="section-label">Loan A — key metrics</div>
+                <div class="grid2" style="gap:8px">
+                    <div class="metric"><div class="mlabel">Monthly payment</div><div class="mval" id="a_pmt">—</div></div>
+                    <div class="metric"><div class="mlabel">EAR (true cost)</div><div class="mval" id="a_ear">—</div><div class="msub" id="a_apr_disp">—</div></div>
+                    <div class="metric"><div class="mlabel">Total interest</div><div class="mval" id="a_int">—</div></div>
+                    <div class="metric"><div class="mlabel">Total paid</div><div class="mval" id="a_total">—</div></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="section-label">Loan B — key metrics</div>
+                <div class="grid2" style="gap:8px">
+                    <div class="metric"><div class="mlabel">Monthly payment</div><div class="mval" id="b_pmt">—</div></div>
+                    <div class="metric"><div class="mlabel">EAR (true cost)</div><div class="mval" id="b_ear">—</div><div class="msub" id="b_apr_disp">—</div></div>
+                    <div class="metric"><div class="mlabel">Total interest</div><div class="mval" id="b_int">—</div></div>
+                    <div class="metric"><div class="mlabel">Total paid</div><div class="mval" id="b_total">—</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="verdict-box" style="margin-bottom:1rem" id="verdict_box">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                <div style="font-size:13px;font-weight:500;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.05em">Which loan is better?</div>
+                <span class="badge badge-win" id="verdict_badge">—</span>
+            </div>
+            <div class="verdict-title" id="verdict_title">—</div>
+            <div class="verdict-body" id="verdict_body">—</div>
+        </div>
+
+        <div class="card" style="margin-bottom:1rem">
+            <div class="section-label">Visualizations</div>
+            <div class="tab-row">
+                <button class="tab active" onclick="switchTab('balance')">Remaining balance</button>
+                <button class="tab" onclick="switchTab('breakdown')">Payment breakdown</button>
+                <button class="tab" onclick="switchTab('compare')">Side-by-side comparison</button>
+            </div>
+
+            <div id="panel_balance" class="chart-panel active">
+                <div class="legend-row">
+                    <span><span class="legend-dot" style="background:#185FA5"></span>Loan A balance</span>
+                    <span><span class="legend-dot" style="background:#0F6E56"></span>Loan B balance</span>
+                </div>
+                <div class="chart-wrap" style="height:260px"><canvas id="chartBalance" role="img" aria-label="Line chart comparing remaining loan balance over time for Loan A and Loan B">Remaining balance over time for both loans.</canvas></div>
+            </div>
+
+            <div id="panel_breakdown" class="chart-panel">
+                <div style="margin-bottom:8px">
+                    <select id="breakdown_loan" style="font-size:12px;padding:4px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-secondary);color:var(--color-text-primary)">
+                        <option value="a">Loan A</option>
+                        <option value="b">Loan B</option>
+                    </select>
+                </div>
+                <div class="legend-row">
+                    <span><span class="legend-dot" style="background:#185FA5"></span>Principal</span>
+                    <span><span class="legend-dot" style="background:#B5D4F4;border:0.5px solid #85B7EB"></span>Interest</span>
+                </div>
+                <div class="chart-wrap" style="height:260px"><canvas id="chartBreakdown" role="img" aria-label="Stacked area chart of principal vs interest portion of monthly payment over time">Interest vs principal payment breakdown over loan life.</canvas></div>
+            </div>
+
+            <div id="panel_compare" class="chart-panel">
+                <div class="legend-row">
+                    <span><span class="legend-dot" style="background:#185FA5"></span>Loan A</span>
+                    <span><span class="legend-dot" style="background:#0F6E56"></span>Loan B</span>
+                </div>
+                <div class="chart-wrap" style="height:300px"><canvas id="chartCompare" role="img" aria-label="Grouped bar chart comparing monthly payment, total interest, and EAR between Loan A and Loan B">Side-by-side comparison of monthly payment, total interest, and EAR.</canvas></div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom:1rem">
+            <div class="section-label">Finance concepts explained</div>
+            <div class="edu-section">
+                <button class="edu-btn" onclick="toggleEdu('apr')"><span>What is APR and why can it mislead you?</span><span id="ico_apr">+</span></button>
+                <div class="edu-content" id="edu_apr">
+                    <strong>Annual Percentage Rate (APR)</strong> is the stated yearly interest rate without accounting for compounding. It's the number lenders advertise — but it understates the true cost whenever interest compounds more than once per year. Two loans can have the same APR yet different actual costs simply because one compounds quarterly while the other compounds monthly. Always look past the APR.
+                </div>
+
+                <button class="edu-btn" onclick="toggleEdu('ear')"><span>What is EAR and why does it matter?</span><span id="ico_ear">+</span></button>
+                <div class="edu-content" id="edu_ear">
+                    <strong>Effective Annual Rate (EAR)</strong> = (1 + APR/m)^m − 1, where m is the number of compounding periods per year. EAR captures the full compounding effect and represents the true annual cost of borrowing. When comparing loans, always compare EARs — not APRs. A 6.5% APR compounded monthly has an EAR of 6.70%; the same APR compounded quarterly yields only 6.65%.
+                </div>
+
+                <button class="edu-btn" onclick="toggleEdu('compound')"><span>Why does compounding frequency change your cost?</span><span id="ico_compound">+</span></button>
+                <div class="edu-content" id="edu_compound">
+                    More frequent compounding means interest accrues on interest sooner, raising your true cost. With monthly compounding, interest is added 12 times a year — each month's balance grows before the next calculation. Annual compounding only adds interest once. The more frequent the compounding, the higher the EAR relative to APR. For a borrower, less frequent compounding is cheaper (for the same APR).
+                </div>
+
+                <button class="edu-btn" onclick="toggleEdu('amort')"><span>What is an amortized loan?</span><span id="ico_amort">+</span></button>
+                <div class="edu-content" id="edu_amort">
+                    An <strong>amortized loan</strong> has fixed periodic payments that fully repay both principal and interest by the end of the term. Each payment covers that period's interest first; the remainder reduces the principal. Early payments are mostly interest (because the outstanding balance is large); later payments shift toward principal. The formula is PMT = [r × PV] / [1 − (1 + r)^(−n)], where r is the periodic rate, PV is the loan amount, and n is the total number of payments. This simulator uses that formula exactly.
+                </div>
+
+                <button class="edu-btn" onclick="toggleEdu('tvm')"><span>Time value of money and total borrowing cost</span><span id="ico_tvm">+</span></button>
+                <div class="edu-content" id="edu_tvm">
+                    A dollar today is worth more than a dollar tomorrow. When you borrow, you receive today's dollars but repay with future dollars. The total interest paid is the price of that privilege. A shorter term means fewer compounding periods — less total interest but higher monthly payments. A longer term lowers monthly cash outflows but dramatically increases total interest paid. The charts above let you see that trade-off in real terms.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
